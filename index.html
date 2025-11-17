@@ -13,26 +13,24 @@
       margin: 0;
       background: #050816;
       color: #f9fafb;
-      font-family: system-ui;
+      font-family: system-ui, sans-serif;
       padding: 20px;
     }
+
     .card {
       background: #0b1120;
-      padding: 20px;
+      padding: 24px;
       border-radius: 16px;
-      max-width: 380px;
+      max-width: 400px;
       margin: auto;
+      box-shadow: 0 0 30px rgba(0,0,0,0.4);
     }
-    input {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-      font-size: 1rem;
-      color: #111;
+
+    h2 {
+      margin-top: 0;
+      text-align: center;
     }
+
     button {
       width: 100%;
       padding: 12px;
@@ -45,11 +43,26 @@
       font-size: 1rem;
       cursor: pointer;
     }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      color: #111;
+    }
+
     #log {
       margin-top: 20px;
       font-size: 0.9rem;
       opacity: 0.8;
       white-space: pre-line;
+      background: rgba(255,255,255,0.05);
+      padding: 12px;
+      border-radius: 8px;
     }
   </style>
 </head>
@@ -60,7 +73,7 @@
 
     <button id="connectBtn">Conectar con Voximplant</button>
 
-    <input id="phone" placeholder="Ej: +5355555555" />
+    <input id="phone" placeholder="+5355555555 (incluye el +)" />
 
     <button id="callBtn">Llamar</button>
 
@@ -68,7 +81,9 @@
   </div>
 
   <script>
-    const log = (t) => document.getElementById("log").innerHTML += t + "\\n";
+    const log = (t) => {
+      document.getElementById("log").innerHTML += t + "\n";
+    };
 
     const client = VoxImplant.getInstance();
     let connected = false;
@@ -80,38 +95,37 @@
       log("Conectando...");
       await client.connect();
 
-      log("Conectado. Iniciando sesión...");
-
-      const username = "cris@remipay.crisdeyvid00.n8.voximplant.com";
+      const username = "cris@remipay.crisdeyvid00.n8.voximplant.com"; 
       const password = "CrPeSo*04";
+
+      log("Iniciando sesión...");
 
       try {
         await client.login(username, password);
-        log("✔️ Login exitoso!");
+        log("✔ Login exitoso.");
         connected = true;
       } catch (e) {
-        log("❌ Error de login: " + e);
+        log("❌ Error de login: " + JSON.stringify(e));
       }
     };
 
-    // ---- Llamar ----
     document.getElementById("callBtn").onclick = () => {
       if (!connected) {
-        log("⚠️ Primero conecta con Voximplant.");
+        log("⚠ Debes conectar primero.");
         return;
       }
 
       const number = document.getElementById("phone").value.trim();
-      if (number.length === 0) {
-        log("⚠️ Escribe un número.");
+      if (number === "") {
+        log("⚠ Escribe un número en formato internacional.");
         return;
       }
 
       log("Marcando: " + number);
 
       const call = client.call(
-        "pstn",                       // routing rule
-        { customData: number }        // el número real
+        "pstn",
+        { customData: number }
       );
 
       call.on(VoxImplant.CallEvents.Connected, () => {
@@ -119,13 +133,14 @@
       });
 
       call.on(VoxImplant.CallEvents.Disconnected, () => {
-        log("❌ Llamada terminada.");
+        log("❌ Llamada finalizada.");
       });
 
       call.on(VoxImplant.CallEvents.Failed, (e) => {
-        log("❌ Falló la llamada: " + JSON.stringify(e));
+        log("❌ Error en la llamada: " + JSON.stringify(e));
       });
     };
   </script>
+
 </body>
 </html>
