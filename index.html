@@ -58,9 +58,11 @@
   <div class="card">
     <h2>Remipay Calls</h2>
 
-    <p>Prueba de conexión con Voximplant</p>
-
     <button id="connectBtn">Conectar con Voximplant</button>
+
+    <input id="phone" placeholder="Ej: +5355555555" />
+
+    <button id="callBtn">Llamar</button>
 
     <div id="log"></div>
   </div>
@@ -68,30 +70,61 @@
   <script>
     const log = (t) => document.getElementById("log").innerHTML += t + "\\n";
 
-    // Cargar SDK
     const client = VoxImplant.getInstance();
+    let connected = false;
 
     document.getElementById("connectBtn").onclick = async () => {
       log("Inicializando cliente...");
-
       await client.init();
-      log("Cliente inicializado.");
 
       log("Conectando...");
       await client.connect();
 
       log("Conectado. Iniciando sesión...");
 
-      // Ajusta tu usuario completo aquí:
-      const username = "cris@remipay.crisdeyvid00.n8.voximplant.com";  
+      const username = "cris@remipay.crisdeyvid00.n8.voximplant.com";
       const password = "CrPeSo*04";
 
       try {
         await client.login(username, password);
         log("✔️ Login exitoso!");
+        connected = true;
       } catch (e) {
         log("❌ Error de login: " + e);
       }
+    };
+
+    // ---- Llamar ----
+    document.getElementById("callBtn").onclick = () => {
+      if (!connected) {
+        log("⚠️ Primero conecta con Voximplant.");
+        return;
+      }
+
+      const number = document.getElementById("phone").value.trim();
+      if (number.length === 0) {
+        log("⚠️ Escribe un número.");
+        return;
+      }
+
+      log("Marcando: " + number);
+
+      const call = client.call(
+        "pstn",                       // routing rule
+        { customData: number }        // el número real
+      );
+
+      call.on(VoxImplant.CallEvents.Connected, () => {
+        log("📞 Llamada conectada.");
+      });
+
+      call.on(VoxImplant.CallEvents.Disconnected, () => {
+        log("❌ Llamada terminada.");
+      });
+
+      call.on(VoxImplant.CallEvents.Failed, (e) => {
+        log("❌ Falló la llamada: " + JSON.stringify(e));
+      });
     };
   </script>
 </body>
